@@ -1,5 +1,6 @@
 import math
 import re
+import string
 
 operators = {"(": 0, ")": 0, "+": 1, "-": 1, "*": 2, "/": 2, "pow": 3, "log": 3}
 
@@ -34,19 +35,25 @@ def rpn(expression):
                 if not out_string:
                     raise ValueError("Отсутствие выражения между скобками")
                 if stack[-2] == 'log':
-                    base = float(out_string.pop())
-                    x = float(out_string.pop())
-                    log_result = math.log(x, base)
-                    out_string.append(log_result)
-                    stack.pop()  # выбрасываем скобку
-                    stack.pop()  # выбрасываем логарифм
+                    if len(out_string) == 1:
+                        raise ValueError("Несоответствие количества аргументов у log")
+                    else:
+                        base = float(out_string.pop())
+                        x = float(out_string.pop())
+                        log_result = math.log(x, base)
+                        out_string.append(log_result)
+                        stack.pop()  # выбрасываем скобку
+                        stack.pop()  # выбрасываем логарифм
                 elif stack[-2] == 'pow':
-                    base = float(out_string.pop())
-                    x = float(out_string.pop())
-                    log_result = math.pow(x, base)
-                    out_string.append(log_result)
-                    stack.pop()  # выбрасываем скобку
-                    stack.pop()  # выбрасываем логарифм
+                    if len(out_string) == 1:
+                        raise ValueError("Несоответствие количества аргументов у pow")
+                    else:
+                        base = float(out_string.pop())
+                        x = float(out_string.pop())
+                        log_result = math.pow(x, base)
+                        out_string.append(log_result)
+                        stack.pop()  # выбрасываем скобку
+                        stack.pop()  # выбрасываем логарифм
                 else:
                     while stack and stack[-1] != '(':
                         out_string.append(stack.pop())
@@ -61,9 +68,9 @@ def rpn(expression):
                     stack.append(token)
                 else:
                     stack.append(token)
-    if stack:
+    while stack:
         out_string += stack.pop()
-    elif len(out_string) == 0:
+    if len(out_string) == 0:
         raise ValueError("Некорректное выражение")
     return out_string
 
@@ -90,8 +97,13 @@ def apply_operator(op, x, y):
 
 
 def calculate_rpn(expression_array):
-    if len(expression_array) == 1 or expression_array[0] == "-" and is_operand(expression_array[1]):
-        return ''.join(expression_array)
+    if len(expression_array) == 1:
+        return expression_array.pop()
+    elif len(expression_array) == 2 and expression_array[0] == "-" and is_operand(expression_array[1]):
+        if float(expression_array[1]) < 0:
+            return f"{expression_array[1]}"
+        else:
+            return f"{expression_array[0]}{expression_array[1]}"
 
     stack = []
     result = 0
@@ -101,10 +113,20 @@ def calculate_rpn(expression_array):
         if is_operand(token):
             stack.append(token)
         else:
-            second_operand = float(stack.pop())
-            first_operand = float(stack.pop())
-            result = apply_operator(token, first_operand, second_operand)
-            expression_array.append(result)
+            if len(stack) == 1 and token == '-':
+                result = f"{token}{stack.pop()}"
+                if len(expression_array) > 1:
+                    expression_array.append(result)
+
+            else:
+                if expression_array and expression_array[-1] == '-':
+                    result = f"{expression_array.pop()}{stack.pop()}"
+                    expression_array.append(result)
+                else:
+                    second_operand = float(stack.pop())
+                    first_operand = float(stack.pop())
+                    result = apply_operator(token, first_operand, second_operand)
+                    expression_array.append(result)
 
     return result
 
@@ -116,10 +138,25 @@ def is_valid_parenthesis(expression):
         raise ValueError("Несоответствие количества '(' и ')'")
 
 
-try:
-    expression = "-log(2, 4)"
+def first_sym_is_plus(expression):
+    if expression[0] == '+':
+        return expression[1:]
+    else:
+        return expression
 
+def double_operations(expression):
+    return re.sub(r'(?<![\+\-\*/])-(\d+)', r'+(0-\1)', first_sym_is_plus(expression))
+
+
+try:
+    expression = "0.2/(-1)"
+
+    expression = re.sub(r'(?<![\+\-\*/])-(\d+)', r'+(0-\1)', first_sym_is_plus(expression))
+    expression = re.sub(r'-(\d+)', r'(0-\1)', expression)
+
+    expression = re.sub(r'--', r'+', expression)
     formatted_expression = re.sub(r'([+\-*/(),])', r' \1 ', expression)
+
     # Удаляем лишние пробелы
     formatted_expression = ' '.join(formatted_expression.split())
     print(formatted_expression)
