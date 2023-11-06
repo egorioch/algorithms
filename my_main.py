@@ -144,6 +144,7 @@ def first_sym_is_plus(expression):
     else:
         return expression
 
+
 def double_operations(expression):
     return re.sub(r'(?<![\+\-\*/])-(\d+)', r'+(0-\1)', first_sym_is_plus(expression))
 
@@ -153,7 +154,6 @@ try:
 
     expression = re.sub(r'(?<![\+\-\*/])-(\d+)', r'+(0-\1)', first_sym_is_plus(expression))
     expression = re.sub(r'-(\d+)', r'(0-\1)', expression)
-
     expression = re.sub(r'--', r'+', expression)
     formatted_expression = re.sub(r'([+\-*/(),])', r' \1 ', expression)
 

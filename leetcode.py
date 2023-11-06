@@ -1,27 +1,29 @@
 # Definition for a binary tree node.
-from typing import Optional
+import heapq
+from collections import defaultdict
+from functools import reduce
+from typing import Optional, List, Counter
 
 
-class TreeNode:
-    def __init__(self, val=0, left=None, right=None):
-        self.val = val
-        self.left = left
-        self.right = right
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        # Step 1: Count the frequency of each element using a hash map
+        freq = {}
+        for num in nums:
+            freq[num] = freq.get(num, 0) + 1
 
+        # Step 2: Use a min-heap to store the top k frequent elements
+        heap = []
+        for num, count in freq.items():
+            if len(heap) < k:
+                heapq.heappush(heap, (count, num))
+            elif count > heap[0][0]:
+                heapq.heappushpop(heap, (count, num))
 
-class Solution(object):
-    def isBalanced(self, root):
-        return (self.Height(root) >= 0)
-
-    def Height(self, root):
-        if root is None:
-            return 0
-        leftheight = self.Height(root.left)
-        rightheight = self.Height(root.right)
-        if abs(leftheight - rightheight) > 1:
-            return -1
-        return max(leftheight, rightheight) + 1
+        # Step 3: Return the elements in the heap
+        return [num for count, num in heap]
 
 
 sol = Solution()
-sol.isBalanced(TreeNode(1, TreeNode(2, TreeNode(10, TreeNode(11, None, None)), TreeNode(5, None, None)), None))
+#  [1,-2,-3,1,3,-2,null,-1]
+print(sol.topKFrequent([4, 1, -1, 2, -1, 2, 3], 2))
